@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Диас — Панель заявок</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0D0D14;
+  --bg2:#13131F;
+  --bg3:#1A1A2E;
+  --border:rgba(255,255,255,0.07);
+  --v:#7C3AED;
+  --v2:#A78BFA;
+  --g:#10B981;
+  --g2:#34D399;
+  --r:#EF4444;
+  --r2:#FCA5A5;
+  --y:#F59E0B;
+  --y2:#FCD34D;
+  --tx:#F1F5F9;
+  --tx2:#94A3B8;
+  --tx3:#475569;
+  --font:'Inter',sans-serif;
+  --rad:18px;
+}
+html,body{height:100%;overflow-x:hidden;background:var(--bg);color:var(--tx);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+
+#login-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg);z-index:100;}
+.login-logo{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:6px;background:linear-gradient(135deg,#A78BFA,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.login-sub{font-size:13px;color:var(--tx3);margin-bottom:36px;}
+.login-box{width:100%;max-width:360px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:28px 24px;}
+.login-label{font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:block;}
+.login-input{width:100%;padding:14px 16px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;color:var(--tx);font-size:16px;outline:none;font-family:var(--font);margin-bottom:16px;}
+.login-input:focus{border-color:rgba(124,58,237,.5);}
+.login-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--v),#6D28D9);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.login-btn:active{opacity:.8;}
+.login-err{font-size:12px;color:var(--r2);text-align:center;margin-top:12px;}
+
+#app{display:none;flex-direction:column;min-height:100vh;}
+.hdr{position:sticky;top:0;z-index:50;background:rgba(13,13,20,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 16px 12px;}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto;}
+.hdr-logo{font-size:17px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#A78BFA,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.stat-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:50px;font-size:11px;font-weight:700;}
+.stat-pending{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#FCD34D;}
+.refresh-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--tx2);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.refresh-btn:active{background:rgba(255,255,255,.1);transform:rotate(180deg);}
+.logout-btn{background:transparent;border:none;color:var(--tx3);font-size:12px;cursor:pointer;padding:4px 8px;}
+
+.tabs{display:flex;gap:4px;padding:12px 16px 0;max-width:640px;margin:0 auto;width:100%;}
+.tab{flex:1;padding:9px 0;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--tx3);text-align:center;}
+.tab.active{background:var(--bg3);color:var(--tx);border-color:rgba(124,58,237,.35);}
+.tab-count{display:inline-block;background:rgba(124,58,237,.25);color:#A78BFA;border-radius:50px;padding:1px 7px;font-size:10px;margin-left:5px;}
+
+.leads-wrap{flex:1;padding:12px 16px 80px;max-width:640px;margin:0 auto;width:100%;}
+.empty{text-align:center;padding:60px 20px;color:var(--tx3);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+
+.lead-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);margin-bottom:12px;overflow:hidden;}
+.lead-card.status-approved{border-color:rgba(16,185,129,.25);}
+.lead-card.status-rejected{border-color:rgba(239,68,68,.18);}
+.lead-card.status-pending{border-left:3px solid var(--y);}
+
+.lead-top{padding:16px 16px 12px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;}
+.lead-avatar{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(6,182,212,.15));border:1px solid rgba(124,58,237,.3);color:#A78BFA;}
+.lead-info{flex:1;min-width:0;}
+.lead-name{font-size:16px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lead-phone{font-size:13px;color:var(--tx2);margin-bottom:4px;}
+.lead-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.lead-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:50px;border:1px solid;}
+.tag-city{background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.25);color:#67E8F9;}
+.tag-biz{background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.22);color:#A78BFA;}
+.tag-lang{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.22);color:#FCD34D;}
+.tag-num{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3);color:#C4B5FD;}
+
+.lead-status{flex-shrink:0;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:700;}
+.badge-pending{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#FCD34D;}
+.badge-approved{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);color:#34D399;}
+.badge-rejected{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#FCA5A5;}
+
+.lead-expand{padding:0 16px 14px;}
+.lead-expand-inner{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:12px;padding:14px;display:none;}
+.lead-card.open .lead-expand-inner{display:block;}
+.detail-row{display:flex;gap:8px;margin-bottom:9px;font-size:13px;}
+.detail-label{color:var(--tx3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;min-width:90px;}
+.detail-val{color:var(--tx2);word-break:break-word;}
+.lead-time{font-size:11px;color:var(--tx3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+
+.lead-actions{display:flex;gap:8px;padding:0 16px 16px;}
+.act-btn{flex:1;padding:13px 8px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.act-btn:active{transform:scale(.97);}
+.btn-approve{background:linear-gradient(135deg,#059669,#10B981);color:#fff;}
+.btn-reject{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#FCA5A5;}
+.btn-delete{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.5);color:#FCA5A5;}
+.btn-expand{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--tx2);font-size:13px;flex:0 0 auto;padding:13px 14px;}
+.btn-done{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--tx3);flex:1;cursor:default;}
+
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;}
+.spinner{width:36px;height:36px;border:3px solid rgba(124,58,237,.15);border-top-color:var(--v);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 22px;border-radius:50px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;backdrop-filter:blur(20px);pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast-ok{background:rgba(16,185,129,.9);color:#fff;}
+.toast-err{background:rgba(239,68,68,.9);color:#fff;}
+.toast-info{background:rgba(124,58,237,.9);color:#fff;}
+
+.date-divider{text-align:center;font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:2px;text-transform:uppercase;padding:8px 0 6px;position:relative;}
+.date-divider::before{content:'';position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--border);}
+.date-divider span{background:var(--bg);padding:0 12px;position:relative;}
+</style>
+
+<script>
+// Базовая защита admin-панели
+(function(){
+  // Проверяем заголовок страницы — только прямой доступ
+  if(window.self !== window.top){document.body.innerHTML='';} // запрет iframe
+  
+  // Автовыход через 30 минут неактивности
+  var _inact=null;
+  function resetInact(){
+    clearTimeout(_inact);
+    _inact=setTimeout(function(){
+      if(typeof authed!=='undefined'&&authed){
+        authed=false;
+        document.getElementById('app').style.display='none';
+        document.getElementById('login-screen').style.display='flex';
+        document.getElementById('pwd-input').value='';
+        document.title='Диас — Панель заявок';
+        alert('Сессия истекла. Войдите снова.');
+      }
+    },30*60*1000);
+  }
+  ['mousemove','keydown','click','scroll','touchstart'].forEach(function(e){
+    document.addEventListener(e,resetInact,{passive:true});
+  });
+  resetInact();
+  
+  // Запрет правой кнопки мыши в admin
+  document.addEventListener('contextmenu',function(e){e.preventDefault();});
+})();
+</script>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-logo">Диас • Admin</div>
+  <div class="login-sub">Панель управления заявками</div>
+  <div class="login-box">
+    <label class="login-label">Пароль</label>
+    <input class="login-input" id="pwd-input" type="password" placeholder="Введите пароль" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-inner">
+      <div class="hdr-logo">Диас • Заявки</div>
+      <div class="hdr-right">
+        <div class="stat-pill stat-pending" id="hdr-pending" style="display:none;">
+          <span id="hdr-pending-n">0</span> ожидают
+        </div>
+        <button class="refresh-btn" id="refreshBtn" title="Обновить">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        </button>
+        <button class="logout-btn" onclick="logout()">Выйти</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('pending')" id="tab-pending">Новые <span class="tab-count" id="cnt-pending">0</span></button>
+    <button class="tab" onclick="setTab('approved')" id="tab-approved">Одобрено <span class="tab-count" id="cnt-approved">0</span></button>
+    <button class="tab" onclick="setTab('all')" id="tab-all">Все <span class="tab-count" id="cnt-all">0</span></button>
+  </div>
+
+  <div class="leads-wrap" id="leads-wrap">
+    <div class="loader"><div class="spinner"></div><div class="loader-txt">Загружаем заявки...</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  ADMIN PANEL v5.0 — все запросы идут через бэкенд
+//  Никаких токенов, URL Apps Script и секретов здесь нет
+// ════════════════════════════════════════════════════════
+
+var allLeads = [];
+var curTab = 'pending';
+var authed = false;
+var _adminToken = '';
+
+// SHA-256 через SubtleCrypto (пароль хэшируется локально,
+// хэш отправляется на сервер — пароль в открытом виде не передаётся)
+async function hashPwd(str) {
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function doLogin() {
+  var pwd = document.getElementById('pwd-input').value;
+  if (!pwd) return;
+  var h = await hashPwd(pwd);
+  try {
+    var res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: h })
+    });
+    var data = await res.json();
+    if (data.ok) {
+      authed = true;
+      _adminToken = data.token;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      loadLeads();
+    } else {
+      document.getElementById('login-err').textContent = 'Неверный пароль';
+      document.getElementById('pwd-input').value = '';
+      document.getElementById('pwd-input').focus();
+      setTimeout(function() { document.getElementById('login-err').textContent = ''; }, 2500);
+    }
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Ошибка соединения';
+  }
+}
+
+function logout() {
+  if (_adminToken) {
+    fetch('/api/admin/logout', {
+      method: 'POST',
+      headers: { 'X-Admin-Token': _adminToken }
+    }).catch(function(){});
+  }
+  authed = false;
+  _adminToken = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pwd-input').value = '';
+  allLeads = [];
+}
+
+async function loadLeads(showToastFlag) {
+  var wrap = document.getElementById('leads-wrap');
+  if (wrap) wrap.innerHTML = '<div class="loader"><div class="spinner"></div><div class="loader-txt">Загружаем заявки...</div></div>';
+
+  try {
+    var res = await fetch('/api/admin/leads?t=' + Date.now(), {
+      headers: { 'X-Admin-Token': _adminToken }
+    });
+    if (res.status === 403) { logout(); return; }
+    var data = await res.json();
+
+    if (!data.ok) {
+      showErr('Ошибка: ' + (data.error || 'unknown'));
+      return;
+    }
+    allLeads = data.leads || [];
+    renderLeads();
+    updateCounts();
+    if (showToastFlag) showToast_('Обновлено', 'info');
+  } catch(e) {
+    showErr('Нет соединения');
+  }
+}
+
+async function deleteLead(row, phone, cardId) {
+  if (!confirm('🗑 Удалить заявку #' + row + '? Действие необратимо.')) return;
+
+  var card = document.getElementById(cardId);
+  if (!card) return;
+  var btns = card.querySelectorAll('.act-btn');
+  btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+
+  try {
+    var res = await fetch('/api/admin/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': _adminToken },
+      body: JSON.stringify({ type: 'delete', row: row, phone: phone })
+    });
+    if (res.status === 403) { logout(); return; }
+    var data = {};
+    try { data = await res.json(); } catch(e) {}
+
+    if (data.ok === true) {
+      allLeads = allLeads.filter(function(l) { return l.row != row; });
+      updateCounts();
+      renderLeads();
+      showToast_('✅ Заявка удалена', 'ok');
+    } else {
+      showToast_('❌ Ошибка: ' + (data.error || 'unknown'), 'err');
+      btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    }
+  } catch(e) {
+    showToast_('❌ Ошибка сети: ' + e.message, 'err');
+    btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+  }
+}
+
+async function approve(row, phone, cardId) {
+  var card = document.getElementById(cardId);
+  if (!card) return;
+  setCardLoading(card, true);
+  try {
+    var ok = await sendAction('approve', row, phone);
+    if (ok) {
+      var lead = allLeads.find(function(l) { return l.row == row; });
+      if (lead) lead.status = 'approved';
+      updateCounts();
+      showToast_('Одобрено!', 'ok');
+      setTimeout(function() { if (curTab === 'pending') renderLeads(); else rerenderCard(cardId, row); }, 400);
+    } else { showToast_('Ошибка', 'err'); setCardLoading(card, false); }
+  } catch(e) { showToast_('Нет соединения', 'err'); setCardLoading(card, false); }
+}
+
+async function reject(row, phone, cardId) {
+  var card = document.getElementById(cardId);
+  if (!card) return;
+  setCardLoading(card, true);
+  try {
+    var ok = await sendAction('reject', row, phone);
+    if (ok) {
+      var lead = allLeads.find(function(l) { return l.row == row; });
+      if (lead) lead.status = 'rejected';
+      updateCounts();
+      showToast_('Отказано', 'info');
+      setTimeout(function() { if (curTab === 'pending') renderLeads(); else rerenderCard(cardId, row); }, 400);
+    } else { showToast_('Ошибка', 'err'); setCardLoading(card, false); }
+  } catch(e) { showToast_('Нет соединения', 'err'); setCardLoading(card, false); }
+}
+
+async function sendAction(type, row, phone) {
+  var res = await fetch('/api/admin/action', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': _adminToken },
+    body: JSON.stringify({ type: type, row: row, phone: phone })
+  });
+  if (res.status === 403) { logout(); return false; }
+  var data = {};
+  try { data = await res.json(); } catch(e) {}
+  return data.ok === true;
+}
+
+function setCardLoading(card, loading) {
+  var btns = card.querySelectorAll('.act-btn');
+  btns.forEach(function(b) { if (!b.disabled) b.disabled = loading; b.style.opacity = loading ? '.5' : '1'; });
+}
+
+function rerenderCard(cardId, row) {
+  var lead = allLeads.find(function(l) { return l.row == row; });
+  var card = document.getElementById(cardId);
+  if (!lead || !card) return;
+  var wasOpen = card.classList.contains('open');
+  card.outerHTML = renderCard(lead);
+  if (wasOpen) { var nc = document.getElementById(cardId); if (nc) nc.classList.add('open'); }
+}
+
+function renderLeads() {
+  var wrap = document.getElementById('leads-wrap');
+  var filtered = filterLeads(curTab);
+
+  if (filtered.length === 0) {
+    var msgs = { pending: 'Нет новых заявок', approved: 'Нет одобренных', all: 'Заявок пока нет' };
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-txt">' + msgs[curTab] + '</div></div>';
+    return;
+  }
+
+  var html = '', lastDate = '';
+  filtered.forEach(function(lead) {
+    var date = (lead.time || '').slice(0, 10);
+    if (date && date !== lastDate) {
+      html += '<div class="date-divider"><span>' + formatDate(lead.time) + '</span></div>';
+      lastDate = date;
+    }
+    html += renderCard(lead);
+  });
+  wrap.innerHTML = html;
+}
+
+function renderCard(lead) {
+  var st = normalizeStatus(lead.status);
+  var initials = (lead.name || '?').trim().charAt(0).toUpperCase();
+  var badgeClass = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected' }[st] || 'badge-pending';
+  var badgeText = { pending: 'На проверке', approved: 'Одобрено', rejected: 'Отказано' }[st] || 'На проверке';
+  var cardClass = 'lead-card status-' + st;
+  var id = 'card-' + lead.row;
+
+  var actions = '';
+  if (st === 'pending') {
+    actions = '<div class="lead-actions">' +
+      '<button class="act-btn btn-approve" onclick="approve(' + lead.row + ',\'' + escAttr(lead.phone) + '\',\'' + id + '\')">✅ Одобрить</button>' +
+      '<button class="act-btn btn-reject" onclick="reject(' + lead.row + ',\'' + escAttr(lead.phone) + '\',\'' + id + '\')">❌ Отказать</button>' +
+      '<button class="act-btn btn-expand" onclick="toggleExpand(\'' + id + '\')">▼</button>' +
+      '</div>';
+  } else {
+    actions = '<div class="lead-actions">' +
+      '<button class="act-btn btn-done" disabled>' + badgeText + '</button>' +
+      '<button class="act-btn btn-delete" onclick="deleteLead(' + lead.row + ',\'' + escAttr(lead.phone) + '\',\'' + id + '\')">🗑 Удалить</button>' +
+      '<button class="act-btn btn-expand" onclick="toggleExpand(\'' + id + '\')">▼</button>' +
+      '</div>';
+  }
+
+  var langTag = lead.lang ? '<span class="lead-tag tag-lang">' + (lead.lang.includes('Қаз') || lead.lang === 'kz' ? 'KZ' : 'RU') + '</span>' : '';
+  var appNum  = lead.appNum ? '<span class="lead-tag tag-num">№ ' + escHtml(lead.appNum) + '</span>' : '';
+
+  return '<div class="' + cardClass + '" id="' + id + '">' +
+    '<div class="lead-top" onclick="toggleExpand(\'' + id + '\')">' +
+    '<div class="lead-avatar">' + initials + '</div>' +
+    '<div class="lead-info">' +
+    '<div class="lead-name">' + escHtml(lead.name || '—') + '</div>' +
+    '<div class="lead-phone">' + escHtml(lead.phone || '—') + '</div>' +
+    '<div class="lead-meta">' +
+    (lead.city ? '<span class="lead-tag tag-city">' + escHtml(lead.city) + '</span>' : '') +
+    (lead.business ? '<span class="lead-tag tag-biz">' + truncate(lead.business, 20) + '</span>' : '') +
+    langTag + appNum +
+    '</div></div>' +
+    '<div class="lead-status"><span class="status-badge ' + badgeClass + '">' + badgeText + '</span></div>' +
+    '</div>' +
+    '<div class="lead-expand">' +
+    '<div class="lead-expand-inner">' +
+    detailRow('Бюджет', lead.budget) +
+    detailRow('Средний чек', lead.avgCheck) +
+    detailRow('Клиенты', lead.source) +
+    detailRow('Проблема', lead.problem) +
+    detailRow('Менеджер', lead.hasSales) +
+    detailRow('Цель', lead.goal) +
+    '<div class="lead-time">' + escHtml(lead.time || '') + '</div>' +
+    '</div></div>' +
+    actions +
+    '</div>';
+}
+
+function detailRow(label, val) { return val ? '<div class="detail-row"><div class="detail-label">' + label + '</div><div class="detail-val">' + escHtml(val) + '</div></div>' : ''; }
+function toggleExpand(id) { var card = document.getElementById(id); if (card) card.classList.toggle('open'); }
+function setTab(tab) { curTab = tab; ['pending', 'approved', 'all'].forEach(function(t) { document.getElementById('tab-' + t).classList.toggle('active', t === tab); }); renderLeads(); }
+function filterLeads(tab) { if (tab === 'all') return allLeads; return allLeads.filter(function(l) { var s = normalizeStatus(l.status); if (tab === 'pending') return s === 'pending'; if (tab === 'approved') return s === 'approved'; return true; }); }
+
+function updateCounts() {
+  var pending  = allLeads.filter(function(l) { return normalizeStatus(l.status) === 'pending'; }).length;
+  var approved = allLeads.filter(function(l) { return normalizeStatus(l.status) === 'approved'; }).length;
+  document.getElementById('cnt-pending').textContent  = pending;
+  document.getElementById('cnt-approved').textContent = approved;
+  document.getElementById('cnt-all').textContent      = allLeads.length;
+  var hdrP = document.getElementById('hdr-pending');
+  if (pending > 0) { hdrP.style.display = 'inline-flex'; document.getElementById('hdr-pending-n').textContent = pending; }
+  else { hdrP.style.display = 'none'; }
+}
+
+function normalizeStatus(s) { s = String(s || '').toLowerCase(); if (s.includes('approv') || s.includes('одобр')) return 'approved'; if (s.includes('reject') || s.includes('отказ')) return 'rejected'; return 'pending'; }
+function formatDate(timeStr) { if (!timeStr) return ''; var parts = timeStr.match(/(\d{2})\.(\d{2})\.(\d{4})/); if (!parts) return timeStr.slice(0, 10); var months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']; return parts[1] + ' ' + months[parseInt(parts[2]) - 1]; }
+function truncate(s, n) { return s && s.length > n ? s.slice(0, n) + '…' : s; }
+function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function escAttr(s) { return String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+function showErr(msg) { document.getElementById('leads-wrap').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-txt">' + escHtml(msg) + '</div></div>'; }
+
+var toastTimer = null;
+function showToast_(msg, type) { var t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast toast-' + type + ' show'; clearTimeout(toastTimer); toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  var refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) refreshBtn.addEventListener('click', function(e) { e.preventDefault(); if (authed) loadLeads(true); });
+  document.getElementById('pwd-input').focus();
+});
+
+setInterval(function() { if (authed) loadLeads(false); }, 30000);
+</script>
+</body>
+</html>
